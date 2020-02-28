@@ -1,0 +1,38 @@
+---
+title: "Data Processing"
+author: "George Dalianis"
+date: "2/28/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(readxl)
+library(readr)
+library(gapminder)
+library(fs)
+```
+
+```{r, load_data}
+path <- "/Users/georgedalianis/Desktop/Gov 1005/finalprojectversion1/EIU-data/EIU_DataBySeries_20200228194092.xlsx"
+
+EIU <- path %>%
+  excel_sheets() %>%
+  set_names() %>%
+  map(read_excel, col_types = "text",
+      path = path, skip=4)
+
+str(EIU)
+
+df <- bind_rows(EIU, .id = "column_label")
+
+social_spending <- read.csv("OECD-data/DP_LIVE_25022020165509421.csv")
+
+stock_foreign_population <- read.csv("OECD-data/DP_LIVE_25022020170950983.csv")
+
+percentpop_with_tertiary_education <- read.csv("OECD-data/DP_LIVE_25022020171724289.csv")
+
+adult_education_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv")
+```
+
