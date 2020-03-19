@@ -12,6 +12,7 @@ library(readxl)
 library(readr)
 library(gapminder)
 library(fs)
+library(janitor)
 ```
 
 ```{r, load_data}
@@ -27,12 +28,20 @@ str(EIU)
 
 df <- bind_rows(EIU, .id = "column_label")
 
-social_spending <- read.csv("OECD-data/DP_LIVE_25022020165509421.csv")
+social_spending <- read.csv("OECD-data/DP_LIVE_25022020165509421.csv") %>%
+  clean_names()
 
-stock_foreign_population <- read.csv("OECD-data/DP_LIVE_25022020170950983.csv")
+stock_foreign_population <- read.csv("OECD-data/DP_LIVE_25022020170950983.csv") %>%
+  clean_names()
 
-percentpop_with_tertiary_education <- read.csv("OECD-data/DP_LIVE_25022020171724289.csv")
+percentpop_with_tertiary_education <- read.csv("OECD-data/DP_LIVE_25022020171724289.csv") %>%
+  clean_names() 
 
-adult_education_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv")
+adult_education_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv") %>%
+  clean_names()
+```
+
+```{r, joining_data}
+x <- inner_join(adult_education_level, percentpop_with_tertiary_education, by = c("time", "location"))
 ```
 

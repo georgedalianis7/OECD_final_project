@@ -1,0 +1,41 @@
+---
+title: "Milestone 5"
+author: "George Dalianis"
+date: "3/19/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(janitor)
+library(scales)
+```
+
+```{r, load_data}
+social_spending <- read.csv("OECD-data/DP_LIVE_19032020165309966.csv") %>%
+  clean_names() %>%
+  select(location, time, value) %>%
+  filter(! location %in% c("EA", "EU"))
+```
+
+```{r, graph_data}
+data_social <- as.data.frame(social_spending)
+x <- data_social %>%
+  group_by(location) %>%
+  summarize(avg_spending = mean(value))
+ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
+  geom_col() + 
+  labs(title = "Average Social Benefits to Households in OECD Countries from 1995 to 2018",
+       subtitle = "In-cash Benefits, Measured as % of GDP", 
+       x = "Country", 
+       y = "Average benefits (% of GDP)",
+       caption = "Source: OECD National Accounts Statistics") +
+  scale_y_continuous(labels = percent_format(scale = 1)) + 
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
+  theme(legend.position = "none") + 
+  scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
+                                                                                                   
+```
+
