@@ -77,16 +77,5 @@ data_social1 <- data_social0[-c(2:5, 8)]
 data_social2 <- data_social1 %>%
   rename(country_code = location) %>%
   rename(year = time)
-x$year <- as.numeric(x$year)
-x1 <- inner_join(x, data_social2, by = c("country_code", "year"))
-
-
-p <- ggplot(x1, aes(x = gdp_per_capita, y = value, size = population, colour = country_name)) + 
-  geom_point(show.legend = FALSE, alpha = 0.7) + 
-  scale_color_viridis_d() + 
-  scale_x_log10() + 
-  labs(x = "GDP per capita", y = "Social spending")
-p + transition_time(year) +
-  labs(title = "Year: {frame_time}")
 ```
 
