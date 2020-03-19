@@ -15,7 +15,7 @@ library(fs)
 library(janitor)
 ```
 
-```{r, load_data}
+```{r, EIU_data}
 path <- "/Users/georgedalianis/Desktop/Gov 1005/finalprojectversion1/EIU-data/EIU_DataBySeries_20200228194092.xlsx"
 
 EIU <- path %>%
@@ -27,8 +27,11 @@ EIU <- path %>%
 str(EIU)
 
 df <- bind_rows(EIU, .id = "column_label")
+```
 
-social_spending <- read.csv("OECD-data/DP_LIVE_25022020165509421.csv") %>%
+
+```{r, OECD data}
+social_spending <- read.csv("OECD-data/DP_LIVE_19032020165309966.csv") %>%
   clean_names()
 
 stock_foreign_population <- read.csv("OECD-data/DP_LIVE_25022020170950983.csv") %>%
@@ -41,7 +44,17 @@ adult_education_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv") %>%
   clean_names()
 ```
 
+
+```{r, world_bank_data}
+gdp_per_cap <- read_csv("World_Bank_data/d697f85d-ea2c-4d71-933e-494201e0e9ac_Data.csv") %>%
+  clean_names() %>%
+  head(-5)
+
+pop <- read_csv("World_Bank_data/e254ec52-ffb5-4bb0-9a0b-d8d669a6b94f_Data.csv") %>%
+  clean_names() %>%
+  head(-5)
+```
+
 ```{r, joining_data}
-x <- inner_join(adult_education_level, percentpop_with_tertiary_education, by = c("time", "location"))
 ```
 

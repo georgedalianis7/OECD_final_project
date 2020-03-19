@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(janitor)
 library(scales)
+library(gganimate)
 ```
 
 ```{r, load_data}
@@ -36,6 +37,56 @@ ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
   theme(legend.position = "none") + 
   scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
-                                                                                                   
+```
+
+
+```{r, load_animate}
+gdp_per_cap <- read_csv("World_Bank_data/d697f85d-ea2c-4d71-933e-494201e0e9ac_Data.csv") %>%
+  clean_names() %>%
+  head(-5)
+gdp_per_cap0 <- gdp_per_cap[-c(5:9)]
+  
+
+pop <- read_csv("World_Bank_data/e254ec52-ffb5-4bb0-9a0b-d8d669a6b94f_Data.csv") %>%
+  clean_names() %>%
+  head(-5)
+pop0 <- pop[-c(5:9)]
+```
+
+
+```{r, tidy_data}
+gdp_per_cap1 <- gdp_per_cap0 %>%
+  pivot_longer(x1995_yr1995:x2018_yr2018, names_to = "year",
+               values_to = "gdp_per_capita",
+               names_prefix = "x(.)(.)(.)(.)_yr",
+               values_drop_na = TRUE)
+
+pop1 <- pop0 %>%
+  pivot_longer(x1995_yr1995:x2018_yr2018, names_to = "year",
+               values_to = "population",
+               names_prefix = "x(.)(.)(.)(.)_yr",
+               values_drop_na = TRUE)
+
+x <- inner_join(gdp_per_cap1, pop1, by = c("country_name", "country_code", "year")) %>%
+  select(country_name, country_code, year, gdp_per_capita, population)
+```
+
+```{r, animate_data}
+data_social0 <- as.data.frame(social_spending) 
+data_social1 <- data_social0[-c(2:5, 8)]
+data_social2 <- data_social1 %>%
+  rename(country_code = location) %>%
+  rename(year = time)
+x$year <- as.numeric(x$year)
+x1 <- inner_join(x, data_social2, by = c("country_code", "year"))
+
+
+p <- ggplot(x1, aes(x = gdp_per_capita, y = value, size = population, colour = country_name)) + 
+  geom_point(show.legend = FALSE, alpha = 0.7) + 
+  scale_color_viridis_d() + 
+  scale_x_log10() + 
+  labs(x = "GDP per capita", y = "Social spending")
+p + transition_time(year) +
+  labs(title = "Year: {frame_time}")
 ```
 
