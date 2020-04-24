@@ -9,13 +9,14 @@
 
 library(shiny)
 
-ui <- navbarPage(
+ui <- fluidPage(
+  navbarPage(
   "Social Spending Programs in the OECD",
-  tabPanel("Model",
+  tabPanel("Overview",
            fluidPage(
              titlePanel("Model Title"),
                mainPanel(plotOutput("preImage")))),
-  tabPanel("Discussion",
+  tabPanel("D",
            titlePanel("Discussion Title"),
            p("Tour of the modeling choices you made and 
               an explanation of why you made them")),
@@ -25,7 +26,7 @@ ui <- navbarPage(
            p(""),
            h3("About Me"),
            p("My name is George Dalianis and I study government and economics at Harvard University. 
-             You can reach me at gdalianis@college.harvard.edu.")))
+             You can reach me at gdalianis@college.harvard.edu."))))
 
 server <- function(input, output) {
   output$preImage <- renderImage({
@@ -34,7 +35,8 @@ server <- function(input, output) {
     
     list(src = filename,
          alt = 'plot',
-         height = 700)
+         height = 600,
+         width = 600)
    
     
   }, deleteFile = FALSE)

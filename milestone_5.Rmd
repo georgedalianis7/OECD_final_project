@@ -25,7 +25,7 @@ data_social <- as.data.frame(social_spending)
 x <- data_social %>%
   group_by(location) %>%
   summarize(avg_spending = mean(value))
-ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
+y <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
   geom_col() + 
   labs(title = "Average Social Benefits to Households in OECD Countries from 1995 to 2018",
        subtitle = "In-cash Benefits, Measured as % of GDP", 
@@ -37,6 +37,11 @@ ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
   theme(legend.position = "none") + 
   scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
+```
+
+```{r}
+oecd_social_benefits.png <- y
+ggsave(filename = "oecd_social_benefits.png", device = "png", plot = last_plot())
 ```
 
 
@@ -67,15 +72,25 @@ pop1 <- pop0 %>%
                names_prefix = "x(.)(.)(.)(.)_yr",
                values_drop_na = TRUE)
 
-x <- inner_join(gdp_per_cap1, pop1, by = c("country_name", "country_code", "year")) %>%
+social_spending1 <- social_spending %>%
+  rename("country_code" = location,
+         "year" = time,
+         "pct_soc_spending" = value) 
+social_spending1$year <- as.character(social_spending1$year)
+graph <- inner_join(gdp_per_cap1, pop1, by = c("country_name", "country_code", "year")) %>%
   select(country_name, country_code, year, gdp_per_capita, population)
+graph1 <- inner_join(graph, social_spending1, by = c("country_code", "year"))
 ```
 
-```{r, animate_data}
-data_social0 <- as.data.frame(social_spending) 
-data_social1 <- data_social0[-c(2:5, 8)]
-data_social2 <- data_social1 %>%
-  rename(country_code = location) %>%
-  rename(year = time)
+```{r}
+life_expectancy <- read.csv("OECD-data/DP_LIVE_24042020220916159.csv") %>%
+  clean_names() %>%
+  rename("country_code" = location,
+         "year" = time,
+         "life_exp" = value) %>%
+  select(country_code, year, life_exp)
+life_expectancy$year <- as.character(life_expectancy$year)
+graph2 <- inner_join(graph1, life_expectancy, by = c("country_code", "year"))
 ```
+
 
