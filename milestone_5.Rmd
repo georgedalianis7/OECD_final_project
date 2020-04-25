@@ -11,8 +11,6 @@ library(tidyverse)
 library(janitor)
 library(scales)
 library(gganimate)
-library(tmap)
-library(leaflet)
 ```
 
 ```{r, load_data}
@@ -126,6 +124,5 @@ write_rds(education, "app/education_data.rds")
 ```
 
 ```{r}
-tm_shape(World) + tm_polygons("income_grp") 
 ```
 
