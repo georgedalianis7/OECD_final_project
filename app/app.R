@@ -8,19 +8,27 @@
 #
 
 library(shiny)
+library(tidyverse)
+library(shinythemes)
+library(readr)
 
-ui <- fluidPage(
-  navbarPage(
-  "Social Spending Programs in the OECD",
-  tabPanel("Overview",
-           fluidPage(
-             titlePanel("Model Title"),
-               mainPanel(plotOutput("preImage")))),
-  tabPanel("D",
+primary_data <- read_rds("primary_data.rds")
+inequality <- read_rds("inequality_data.rds")
+education <- read_rds("education_data.rds")
+
+ui <- fluidPage(theme = shinytheme("cosmo"),
+  titlePanel("Social Spending Programs in the OECD"),
+  tabsetPanel(
+    tabPanel("Overview", 
+           mainPanel(
+             h3("Social Spending Intro"), 
+             plotOutput("preImage"),
+             h3("This graph is an demonstration of social spending in the OECD Countries"))),
+    tabPanel("Discussion",
            titlePanel("Discussion Title"),
            p("Tour of the modeling choices you made and 
               an explanation of why you made them")),
-  tabPanel("About", 
+    tabPanel("About", 
            titlePanel("About"),
            h3("Project Background and Motivations"),
            p(""),

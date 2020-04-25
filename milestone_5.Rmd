@@ -1,7 +1,7 @@
 ---
-title: "Milestone 5"
+title: "Clean Data"
 author: "George Dalianis"
-date: "3/19/2020"
+date: "4/24/20"
 output: html_document
 ---
 
@@ -11,6 +11,8 @@ library(tidyverse)
 library(janitor)
 library(scales)
 library(gganimate)
+library(tmap)
+library(leaflet)
 ```
 
 ```{r, load_data}
@@ -90,7 +92,40 @@ life_expectancy <- read.csv("OECD-data/DP_LIVE_24042020220916159.csv") %>%
          "life_exp" = value) %>%
   select(country_code, year, life_exp)
 life_expectancy$year <- as.character(life_expectancy$year)
-graph2 <- inner_join(graph1, life_expectancy, by = c("country_code", "year"))
+primary_data <- inner_join(graph1, life_expectancy, by = c("country_code", "year"))
+write_rds(primary_data, "app/primary_data.rds")
 ```
 
+
+```{r, inequality_data}
+gini <- read.csv("OECD-data/DP_LIVE_24042020230247538.csv") %>%
+  clean_names() %>% 
+  rename("year" = time,
+         "gini" = value) %>%
+  select(location, year, gini) %>%
+  filter(year == 2015)
+write_rds(gini, "app/inequality_data.rds")
+```
+
+```{r, education_data}
+adult_edu_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv") %>%
+  clean_names() %>%
+  filter(time == 2018, subject == "UPPSRY", ! location %in% c("OAVG", "COL", "ZAF", "CRI")) %>%
+  rename("year" = time,
+         "pct_secondary" = value)
+
+pct_tertiary_edu <- read.csv("OECD-data/DP_LIVE_25022020171724289.csv") %>%
+  clean_names() %>%
+  rename("year" = time,
+         "pct_tert" = value) %>%
+  filter(year == 2018, subject == "25_34", ! location %in% c("OAVG", "COL", "ZAF", "CRI"))
+
+education <- inner_join(adult_edu_level, pct_tertiary_edu, by = c("location", "year")) %>%
+  select(location, year, pct_secondary, pct_tert)
+write_rds(education, "app/education_data.rds")
+```
+
+```{r}
+tm_shape(World) + tm_polygons("income_grp") 
+```
 
