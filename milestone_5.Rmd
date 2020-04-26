@@ -11,6 +11,7 @@ library(tidyverse)
 library(janitor)
 library(scales)
 library(gganimate)
+library(readr)
 ```
 
 ```{r, load_data}
@@ -25,7 +26,7 @@ data_social <- as.data.frame(social_spending)
 x <- data_social %>%
   group_by(location) %>%
   summarize(avg_spending = mean(value))
-y <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
+soc_spending_plot <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
   geom_col() + 
   labs(title = "Average Social Benefits to Households in OECD Countries from 1995 to 2018",
        subtitle = "In-cash Benefits, Measured as % of GDP", 
@@ -37,6 +38,7 @@ y <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill =
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
   theme(legend.position = "none") + 
   scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
+saveRDS(soc_spending_plot, file = "app/soc_spending_plot.rds")
 ```
 
 ```{r}
@@ -100,15 +102,14 @@ gini <- read.csv("OECD-data/DP_LIVE_24042020230247538.csv") %>%
   clean_names() %>% 
   rename("year" = time,
          "gini" = value) %>%
-  select(location, year, gini) %>%
-  filter(year == 2015)
+  select(location, year, gini)
 write_rds(gini, "app/inequality_data.rds")
 ```
 
 ```{r, education_data}
 adult_edu_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv") %>%
   clean_names() %>%
-  filter(time == 2018, subject == "UPPSRY", ! location %in% c("OAVG", "COL", "ZAF", "CRI")) %>%
+  filter(subject == "UPPSRY", ! location %in% c("COL", "ZAF", "CRI")) %>%
   rename("year" = time,
          "pct_secondary" = value)
 
@@ -116,13 +117,28 @@ pct_tertiary_edu <- read.csv("OECD-data/DP_LIVE_25022020171724289.csv") %>%
   clean_names() %>%
   rename("year" = time,
          "pct_tert" = value) %>%
-  filter(year == 2018, subject == "25_34", ! location %in% c("OAVG", "COL", "ZAF", "CRI"))
+  filter(subject == "25_34", ! location %in% c("COL", "ZAF", "CRI"))
 
 education <- inner_join(adult_edu_level, pct_tertiary_edu, by = c("location", "year")) %>%
   select(location, year, pct_secondary, pct_tert)
 write_rds(education, "app/education_data.rds")
 ```
 
-```{r}
+```{r, interactive_data}
+options(scipen = 10000)
+primary_data$year <- as.integer(primary_data$year)
+life_exp_anim <- primary_data %>%
+  ggplot(aes(x = gdp_per_capita, y = life_exp, size = population, color = country_name)) + 
+  geom_point(show.legend = FALSE, alpha = 0.7) + 
+  scale_color_viridis_d() + scale_x_log10() +
+  theme_classic() +
+  transition_time(year) + 
+  labs(title = "Year: {frame_time}",
+       x = "GDP per capita (US$, PPP adjusted)",
+       y = "Life Expectancy (Years)",
+       caption = "Source: OECD and World Bank") + 
+  shadow_mark()
+anim_save(filename = "life_exp_animation", animation = life_exp_anim, path = "app")
 ```
+
 

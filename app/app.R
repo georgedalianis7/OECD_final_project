@@ -28,15 +28,14 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                 stimulate international economic progress, facilitate world trade, and collect
                 data regarding economic development."),
                mainPanel(
-                 
                  plotlyOutput("map"),
                  h2("About the Data"),
-                 h4("All data was sourced from the",
+                 p("All data was sourced from the",
                           a(href = "https://data.worldbank.org/", "World Bank"),
                           "and the",
                           a(href = "https://data.oecd.org/", "OECD."),
                           "Specifically, I used data regarding",
-                          a(href = "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=OE", "life expectancy"),
+                          a(href = "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=OE", "GDP"),
                           "and",
                           a(href = "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=OE", "population"),
                           "from the World Bank. I utilized OECD data for",
@@ -47,35 +46,28 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                           a(href = "https://data.oecd.org/eduatt/adult-education-level.htm", "education"),
                           "statistics."),
                  h2("About Me"),
-                 h4("My name is George Dalianis, and I am a freshman at Harvard College studying government and economics. The source code for this project on my", 
+                 p("My name is George Dalianis, and I am a freshman at Harvard College studying government and economics. The source code for this project on my", 
                     a(href = "https://github.com/georgedalianis7", "Github"), "account. Contact me at gdalianis@college.harvard.edu.")
                  )
                ),
     tabPanel("Overview", 
            mainPanel(
              h3("Social Spending Intro"), 
-             plotOutput("preImage"),
-             h3("This graph is an demonstration of social spending in the OECD Countries"))),
+             h5("testing to see if this works because I need"),
+             plotOutput("image"),
+             h3("This graph is an demonstration of social spending in the OECD Countries"),
+             h5("testing to see if thsi works"),
+             plotOutput("animation"))),
     tabPanel("Econ",
         sidebarLayout(
           sidebarPanel(
             selectInput(
               inputId = "gdp_per_capita",
-              label = "Economic Changes",
-              choices = c("GDP Per Capita in US Dollars" = "GDP Per Capita"
-            )
-          )
-        ),
+              label = "Select Input:",
+              choices = c("GDP Per Capita", "Population", "Life Exp"), selected = "GDP Per Capita")),
         mainPanel(
-          plotOutput("gdp_per_cap_graph"))
-        )),
-    tabPanel("About", 
-           titlePanel("About"),
-           h3("Project Background and Motivations"),
-           p(""),
-           h3("About Me"),
-           p("My name is George Dalianis and I study government and economics at Harvard University. 
-             You can reach me at gdalianis@college.harvard.edu."))))
+          plotOutput("gdp_per_cap_graph"))))))
+           
 
 server <- function(input, output) {
   output$map <- renderPlotly({
@@ -87,30 +79,29 @@ server <- function(input, output) {
       layout(title = "Current OECD Member Nations",
              annotations = list(x = 0.9, y = -0.05, text = "Source: OECD", showarrow = FALSE))
   })
-  output$preImage <- renderImage({
-    
-    filename <- normalizePath(file.path("oecd_social_benefits.png"))
-    
-    list(src = filename,
-         alt = 'plot',
-         height = 600,
-         width = 600)
-  }, deleteFile = FALSE)
+  
+  output$image <- renderPlot({
+      readRDS(file = "soc_spending_plot.rds")
+  })
+  
+  output$animation <- renderImage({
+    list(src = "life_exp_animation",
+         contentType = "image/gif",
+         width = 600)}, deleteFile = FALSE)
+  
+  
   output$gdp_per_cap_graph <- renderPlot({
     if(input$gdp_per_capita == "GDP per Capita") {
-      y_value <- primary_data$gdp_per_capita
-      y_lab <- "GDP per Capita"
-      gdp_title <- "OECD GDP per Capita"
+      readRDS(file = "soc_spending_plot.rds")
     }
-    primary_data %>%
-      filter(year == 2017) %>%
-      ggplot(aes(pct_soc_spending, gdp_per_capita)) +
-      geom_point() +
-      labs(title = "z",
-           x = "Country",
-           y = "x") +
-      theme_classic()
+    else if(input$gdp_per_capita == "Population"){
+      readRDS(file = "soc_spending_plot.rds")
+    } else {
+      readRDS(file = "soc_spending_plot.rds")
+    }
+    
   })
+  
 }
 # Run the application 
 shinyApp(ui = ui, server = server)
