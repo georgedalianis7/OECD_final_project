@@ -22,15 +22,33 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
   tabsetPanel(
     tabPanel("About",
              h2("What is the OECD?"),
-             h4("Founded in 1961, the Organisation for Economic Co-operation and
-                Development (OECD) is an intergovernmental economic organisation
-                with 36 member countries as of 2020. Its primary goal is to 
-                stimulate economic progress, facilitate world trade, and collect
+             h4("Founded in 1961, the Organization for Economic Co-operation and
+                Development (OECD) is an intergovernmental economic organization
+                consisting of 36 member countries. Its primary goal is to 
+                stimulate international economic progress, facilitate world trade, and collect
                 data regarding economic development."),
                mainPanel(
+                 
                  plotlyOutput("map"),
                  h2("About the Data"),
-                 h4()
+                 h4("All data was sourced from the",
+                          a(href = "https://data.worldbank.org/", "World Bank"),
+                          "and the",
+                          a(href = "https://data.oecd.org/", "OECD."),
+                          "Specifically, I used data regarding",
+                          a(href = "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=OE", "life expectancy"),
+                          "and",
+                          a(href = "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=OE", "population"),
+                          "from the World Bank. I utilized OECD data for",
+                          a(href = "https://data.oecd.org/socialexp/social-spending.htm", "social spending,"),
+                          a(href = "https://data.oecd.org/healthstat/life-expectancy-at-birth.htm", "life expectancy,"),
+                          a(href = "https://data.oecd.org/healthstat/life-expectancy-at-birth.htm", "economic inequality,"),
+                          "and",
+                          a(href = "https://data.oecd.org/eduatt/adult-education-level.htm", "education"),
+                          "statistics."),
+                 h2("About Me"),
+                 h4("My name is George Dalianis, and I am a freshman at Harvard College studying government and economics. The source code for this project on my", 
+                    a(href = "https://github.com/georgedalianis7", "Github"), "account. Contact me at gdalianis@college.harvard.edu.")
                  )
                ),
     tabPanel("Overview", 
@@ -63,8 +81,11 @@ server <- function(input, output) {
   output$map <- renderPlotly({
     primary_data %>%
       mutate(x = rep(1, 778)) %>%
+      filter(year == 2016) %>%
       plot_geo(locationmode = "country names") %>%
-      add_trace(z = ~x, locations = ~country_name, showscale = FALSE)
+      add_trace(z = ~x, locations = ~country_name, showscale = FALSE) %>%
+      layout(title = "Current OECD Member Nations",
+             annotations = list(x = 0.9, y = -0.05, text = "Source: OECD", showarrow = FALSE))
   })
   output$preImage <- renderImage({
     
