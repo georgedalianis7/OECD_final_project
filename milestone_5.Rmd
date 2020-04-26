@@ -12,6 +12,7 @@ library(janitor)
 library(scales)
 library(gganimate)
 library(readr)
+library(broom)
 ```
 
 ```{r, load_data}
@@ -141,4 +142,35 @@ life_exp_anim <- primary_data %>%
 anim_save(filename = "life_exp_animation", animation = life_exp_anim, path = "app")
 ```
 
+```{r}
+social_exp <- read.csv("OECD-data/DP_LIVE_26042020204617582.csv") %>%
+  clean_names() %>%
+  filter(time <= 2015) %>%
+  select(location, time, value) %>%
+  rename("soc_exp_pctgdp" = value)
+unemployment_benefits <- read.csv("OECD-data/DP_LIVE_26042020204828426.csv") %>%
+  clean_names() %>%
+  select(location, time, value) %>%
+  rename("unemp_expenditure" = value)
+pension_spending <- read.csv("OECD-data/DP_LIVE_26042020204940396.csv") %>%
+  clean_names() %>%
+  filter(time <= 2015) %>%
+  select(location, time, value) %>%
+  rename("pension_spending" = value)
+joined_socialp1 <- inner_join(social_exp, unemployment_benefits, by = c("location", "time"))
+final_joined_social <- inner_join(joined_socialp1, pension_spending, by = c("location", "time"))
+```
+
+```{r}
+write_rds(final_joined_social, "app/final_socialspending_data.rds")
+```
+
+```{r, recession_animate}
+primary_data %>%
+ ggplot(aes(x = pct_soc_spending, y = gdp_per_capita)) + geom_point() + geom_smooth(method = "lm")
+
+model <- lm(gdp_per_capita ~ pct_soc_spending, data = primary_data) %>%
+  tidy(conf.int = TRUE) 
+model
+```
 

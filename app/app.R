@@ -22,7 +22,7 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
   tabsetPanel(
     tabPanel("About",
              h2("What is the OECD?"),
-             h4("Founded in 1961, the Organization for Economic Co-operation and
+             p("Founded in 1961, the Organization for Economic Co-operation and
                 Development (OECD) is an intergovernmental economic organization
                 consisting of 36 member countries. Its primary goal is to 
                 stimulate international economic progress, facilitate world trade, and collect
