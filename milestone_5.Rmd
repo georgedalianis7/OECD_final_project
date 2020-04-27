@@ -134,7 +134,8 @@ life_exp_anim <- primary_data %>%
   scale_color_viridis_d() + scale_x_log10() +
   theme_classic() +
   transition_time(year) + 
-  labs(title = "Year: {frame_time}",
+  labs(title = "OECD Development 1995-2018",
+       subtitle = "Year: {frame_time}",
        x = "GDP per capita (US$, PPP adjusted)",
        y = "Life Expectancy (Years)",
        caption = "Source: OECD and World Bank") + 
@@ -219,6 +220,23 @@ saveRDS(inequality_regression, file = "app/ineq_regression.rds")
 ```{r}
 labor_market <- read.csv("OECD-data/EPL_OV_27042020040430416.csv") %>%
   clean_names() %>%
-  select(country, country_2, time, value)
+  select(country, country_2, time, value) %>%
+  rename("country_name" = country_2,
+         "year" = time)
+primary_data$year <- as.integer(primary_data$year)
+abc <- inner_join(labor_market, primary_data, by = c("country_name", "year"))
+market_regression <- ggplot(abc, aes(x = pct_soc_spending, y = value)) + 
+    geom_jitter(height = 0.05) + geom_smooth(method = "lm", se = FALSE) + theme_classic() +
+    labs(title = "Effect of Social Spending Programs on Labor Market Freedom",
+         subtitle = "Labor Market Freedom Measured on 1-5 Scale: Higher Number Means Comparatively Lower Freedom",
+         x = "Level of Social Spending as % of GDP",
+         y = "Degree of Labor Market Freedom")
+  saveRDS(market_regression, file = "app/mark_regression.rds")
+```
+
+```{r, facet_graph}
+primary_data %>%
+  filter(country_name %in% c("Greece", "United States")) %>%
+  ggplot(aes(x = year, y = gdp_per_capita)) + geom_line() + facet_wrap(~ country_name)
 ```
 

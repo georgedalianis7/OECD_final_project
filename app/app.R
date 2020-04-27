@@ -29,27 +29,7 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                 data regarding economic development."),
                mainPanel(
                  plotlyOutput("map"),
-                 h2("About the Data"),
-                 p("All data was sourced from the",
-                          a(href = "https://data.worldbank.org/", "World Bank"),
-                          "and the",
-                          a(href = "https://data.oecd.org/", "OECD."),
-                          "Specifically, I used data regarding",
-                          a(href = "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=OE", "GDP"),
-                          "and",
-                          a(href = "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=OE", "population"),
-                          "from the World Bank. I utilized OECD data for",
-                          a(href = "https://data.oecd.org/socialexp/social-spending.htm", "social spending,"),
-                          a(href = "https://data.oecd.org/healthstat/life-expectancy-at-birth.htm", "life expectancy,"),
-                          a(href = "https://data.oecd.org/healthstat/life-expectancy-at-birth.htm", "economic inequality,"),
-                          "and",
-                          a(href = "https://data.oecd.org/eduatt/adult-education-level.htm", "education"),
-                          "statistics."),
-                 h2("About Me"),
-                 p("My name is George Dalianis, and I am a freshman at Harvard College studying government and economics. The source code for this project on my", 
-                    a(href = "https://github.com/georgedalianis7", "Github"), "account. Contact me at gdalianis@college.harvard.edu.")
-                 )
-               ),
+                 h2("About the Data"))),
     tabPanel("Overview", 
            mainPanel(
              h3("Social Spending Intro"), 
@@ -66,8 +46,36 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
               label = "Select Input:",
               choices = c("Economic Inequality", "GDP Per Capita (PPP-adjusted)", "Life Expectancy"), selected = "Economic Inequality")),
         mainPanel(
-          plotOutput("gdp_per_cap_graph"),
-          h2("seeing if this works"))))))
+          plotOutput("gdp_per_cap_graph"))),
+        mainPanel(
+          p("Cleary, talk about correlation blah blah blaheeing if this works"),
+          h2("Labor Market Freedom"),
+          plotOutput("labor_market_graph"),
+          p("Analysis of Coefficient and stuff"))),
+    tabPanel("About",
+             h2("About the Data"),
+             p("All data was sourced from the",
+               a(href = "https://data.worldbank.org/", "World Bank"),
+               "and the",
+               a(href = "https://data.oecd.org/", "OECD."),
+               "Specifically, I used data regarding",
+               a(href = "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD?locations=OE", "GDP"),
+               "and",
+               a(href = "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=OE", "population"),
+               "from the World Bank. I utilized OECD data for",
+               a(href = "https://data.oecd.org/socialexp/social-spending.htm", "social spending,"),
+               a(href = "https://data.oecd.org/healthstat/life-expectancy-at-birth.htm", "life expectancy,"),
+               a(href = "https://data.oecd.org/healthstat/life-expectancy-at-birth.htm", "economic inequality,"),
+               "and",
+               a(href = "https://data.oecd.org/eduatt/adult-education-level.htm", "education"),
+               "statistics."),
+             h2("Project Motivations"),
+             p("After taking coursework in comparative politics and economics, I became very interested in international economic growth."),
+             h2("About Me"),
+             p("My name is George Dalianis, and I am a freshman at Harvard College studying government and economics. The source code for this project on my", 
+               a(href = "https://github.com/georgedalianis7", "Github"), "account. Contact me at gdalianis@college.harvard.edu.")
+    )
+  ))
            
 
 server <- function(input, output) {
@@ -102,6 +110,9 @@ server <- function(input, output) {
       readRDS(file = "life_exp_regression.rds")
     }
     
+  })
+  output$labor_market_graph <- renderPlot({
+    readRDS(file = "mark_regression.rds")
   })
   
 }
