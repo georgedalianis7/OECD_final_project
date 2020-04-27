@@ -56,17 +56,18 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
              h5("testing to see if this works because I need"),
              plotOutput("image"),
              h3("This graph is an demonstration of social spending in the OECD Countries"),
-             h5("testing to see if thsi works"),
+             h5("testing to see if this works"),
              plotOutput("animation"))),
-    tabPanel("Econ",
+    tabPanel("Economic Factors",
         sidebarLayout(
           sidebarPanel(
             selectInput(
               inputId = "gdp_per_capita",
               label = "Select Input:",
-              choices = c("GDP Per Capita", "Population", "Life Exp"), selected = "GDP Per Capita")),
+              choices = c("Economic Inequality", "GDP Per Capita (PPP-adjusted)", "Life Expectancy"), selected = "Economic Inequality")),
         mainPanel(
-          plotOutput("gdp_per_cap_graph"))))))
+          plotOutput("gdp_per_cap_graph"),
+          h2("seeing if this works"))))))
            
 
 server <- function(input, output) {
@@ -91,13 +92,14 @@ server <- function(input, output) {
   
   
   output$gdp_per_cap_graph <- renderPlot({
-    if(input$gdp_per_capita == "GDP per Capita") {
-      readRDS(file = "soc_spending_plot.rds")
+    if(input$gdp_per_capita == "Economic Inequality") {
+      readRDS(file = "ineq_regression.rds")
     }
-    else if(input$gdp_per_capita == "Population"){
-      readRDS(file = "soc_spending_plot.rds")
-    } else {
-      readRDS(file = "soc_spending_plot.rds")
+    else if(input$gdp_per_capita == "GDP Per Capita (PPP-adjusted)"){
+      readRDS(file = "soc1_regression.rds")
+    } 
+    else{
+      readRDS(file = "life_exp_regression.rds")
     }
     
   })

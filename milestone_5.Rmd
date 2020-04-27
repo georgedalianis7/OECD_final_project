@@ -165,12 +165,60 @@ final_joined_social <- inner_join(joined_socialp1, pension_spending, by = c("loc
 write_rds(final_joined_social, "app/final_socialspending_data.rds")
 ```
 
-```{r, recession_animate}
-primary_data %>%
- ggplot(aes(x = pct_soc_spending, y = gdp_per_capita)) + geom_point() + geom_smooth(method = "lm")
-
+```{r, soc_regreggion}
+soc_regression <- primary_data %>%
+ggplot(aes(x = pct_soc_spending, y = gdp_per_capita)) + 
+  geom_point() + 
+  scale_x_log10() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  theme_classic() + 
+  labs(title = "Effect of Social Programs on GDP per capita",
+       subtitle = "Benefits measured in-cash, 2010 Dollars",
+       x = "Social Spending as % of GDP",
+       y = "GDP per capita(2010 Dollars)")
+saveRDS(soc_regression, file = "app/soc1_regression.rds")
 model <- lm(gdp_per_capita ~ pct_soc_spending, data = primary_data) %>%
   tidy(conf.int = TRUE) 
 model
+```
+
+```{r, life_regression}
+life_regression <- primary_data %>%
+  ggplot(aes(x = pct_soc_spending, y = life_exp)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  scale_x_log10() + 
+  theme_classic() +
+  labs(title = "Effect of Social Spending on Life Expectancy",
+       subtitle = "Benefits Measured in-cash, 2010 Dollars",
+       x = "Social Spending as a % of GDP",
+       y = "Life Expectancy")
+saveRDS(life_regression, file = "app/life_exp_regression.rds")
+model1 <- lm(life_exp ~ pct_soc_spending, data = primary_data) %>%
+  tidy(conf.int = TRUE) 
+model1
+```
+
+```{r, inequality_regression}
+x <- inequality_data %>%
+  filter(year == 2015)
+y <- final_socialspending_data %>%
+  filter(time == 2015)
+inequality <- inner_join(x, y, by = "location")
+inequality_regression <- ggplot(inequality, aes(x = soc_exp_pctgdp, y = gini)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic() +
+  labs(title = "Effect of Social Spending on Economic Inequality",
+       subtitle = "Measured by Gini Coefficient: Number between 0 and 1, a higher coefficient signals greater inequality",
+       x = "Social Spending as a % of GDP",
+       y = "Gini Coefficient")
+saveRDS(inequality_regression, file = "app/ineq_regression.rds")
+```
+
+```{r}
+labor_market <- read.csv("OECD-data/EPL_OV_27042020040430416.csv") %>%
+  clean_names() %>%
+  select(country, country_2, time, value)
 ```
 
