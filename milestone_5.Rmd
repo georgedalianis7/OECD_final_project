@@ -235,8 +235,47 @@ market_regression <- ggplot(abc, aes(x = pct_soc_spending, y = value)) +
 ```
 
 ```{r, facet_graph}
-primary_data %>%
-  filter(country_name %in% c("Greece", "United States")) %>%
-  ggplot(aes(x = year, y = gdp_per_capita)) + geom_line() + facet_wrap(~ country_name)
+primary_data$year <- as.numeric(primary_data$year)
+richest_poorest <- primary_data %>%
+  group_by(year) %>%
+  filter(year <= 2017) %>%
+  filter(country_name %in% c("Luxembourg", "Greece")) %>%
+  ggplot(aes(x = year, y = gdp_per_capita, color = country_name)) + 
+  geom_line() + 
+  geom_vline(xintercept = 2008, linetype = "dashed") + 
+  scale_color_manual(labels = c("Greece", "Luxembourg"),
+                     values = c("blue", "red")) +
+  geom_text(aes(x = 2007.5, label = "2008 Recession", y = 60000), angle = 90, color = "black") +
+  theme_classic() + 
+  labs(title = "Richest and Poorest OECD Countries in 2016",
+       subtitle = "Measured by GDP Per Capita, US$",
+       x = "Year",
+       y = "GDP Per Capita, US$",
+       color = "Country")
+```
+
+```{r}
+abc1 <- abc %>%
+  filter(year <= 2015) %>%
+  group_by(year) %>%
+  nest()
+abc1 %>%
+  mutate(mod = map(data, ~ lm(gdp_per_capita ~ value, data = .)),
+         reg_results = map(mod, ~ tidy(.)),
+         coef = map_dbl(reg_results, ~ filter(., term == "value") 
+                        %>% pull(estimate)),
+         se = map_dbl(reg_results, ~ filter(., term == "value")
+                      %>% pull(std.error)),
+         upper = coef + 1.96 * se,
+         lower = coef - 1.96 * se) %>%
+ ggplot(aes(x = year, y = coef)) +
+  geom_point(color = "blue") +
+  geom_errorbar(aes(x = year, ymin = lower, ymax = upper), color = "blue") +
+  theme_classic() +
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  labs(title = "Effect of Lower Labor Market Regulation on GDP Per Capita",
+       subtitle = "Controlling for Social Spending",
+       x = "Year",
+       y = "Coefficient")
 ```
 
