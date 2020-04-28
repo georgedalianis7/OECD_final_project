@@ -236,10 +236,16 @@ abc <- inner_join(labor_market, primary_data, by = c("country_name", "year"))
 market_regression <- ggplot(abc, aes(x = pct_soc_spending, y = value)) + 
     geom_jitter(height = 0.05) + geom_smooth(method = "lm", se = FALSE) + theme_classic() +
     labs(title = "Effect of Social Spending Programs on Labor Market Freedom",
-         subtitle = "Labor Market Freedom Measured on 1-5 Scale: Higher Number Means Comparatively Lower Freedom",
+         subtitle = "Labor Market Regulation Measured on 1-5 Scale: Higher Number Means Comparatively Lower Freedom",
          x = "Level of Social Spending as % of GDP",
-         y = "Degree of Labor Market Freedom")
+         y = "Degree of Labor Market Regulation")
   saveRDS(market_regression, file = "app/mark_regression.rds")
+```
+
+```{r}
+model1 <- lm(value ~ pct_soc_spending, data = abc) %>%
+  tidy(conf.int = TRUE) 
+model1
 ```
 
 ```{r, facet_graph}
@@ -278,17 +284,17 @@ ad1 <- ad %>%
   group_by(time) %>%
   nest()
 x <- ad1 %>%
-  mutate(mod = map(data, ~ lm(value ~ pension_spending, data = .)),
+  mutate(mod = map(data, ~ lm(pension_spending ~ value, data = .)),
          reg_results = map(mod, ~ tidy(.)),
-         coef = map_dbl(reg_results, ~ filter(., term == "pension_spending") 
+         coef = map_dbl(reg_results, ~ filter(., term == "value") 
                         %>% pull(estimate)),
-         se = map_dbl(reg_results, ~ filter(., term == "pension_spending")
+         se = map_dbl(reg_results, ~ filter(., term == "value")
                       %>% pull(std.error)),
          upper = coef + 1.96 * se,
          lower = coef - 1.96 * se)
  ggplot(x, aes(x = time, y = coef)) +
   geom_point(color = "blue") +
-  geom_errorbar(aes(x = year, ymin = lower, ymax = upper), color = "blue") +
+  geom_errorbar(aes(x = time, ymin = lower, ymax = upper), color = "blue") +
   theme_classic() +
   geom_hline(yintercept = 0, linetype = "dashed") + 
   labs(title = "Effect of Labor Market Regulation on GDP Per Capita",
@@ -312,7 +318,42 @@ migration_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = unemp_ex
        x = "Social Expenditure as a % of GDP",
        y = "Unemployment Expenditure as % of GDP")
 saveRDS(migration_graph, file = "app/mig_graph.rds")
+model1 <- lm(unemp_expenditure ~ soc_exp_pctgdp, data = joined_migration) %>%
+  tidy(conf.int = TRUE) 
+model1
 ```
+
+
+```{r}
+lol <- joined_migration %>%
+  filter(time <= 2015) %>%
+  group_by(time) %>%
+  nest()
+w <- lol %>%
+  mutate(mod = map(data, ~ lm(soc_exp_pctgdp ~ pct_foreignborn, data = .)),
+         reg_results = map(mod, ~ tidy(.)),
+         coef = map_dbl(reg_results, ~ filter(., term == "pct_foreignborn") 
+                        %>% pull(estimate)),
+         se = map_dbl(reg_results, ~ filter(., term == "pct_foreignborn")
+                      %>% pull(std.error)),
+         upper = coef + 1.96 * se,
+         lower = coef - 1.96 * se)
+ migration_error <- ggplot(x, aes(x = time, y = coef)) +
+  geom_point(color = "blue") +
+  geom_errorbar(aes(x = time, ymin = lower, ymax = upper), color = "blue") +
+  theme_classic() +
+  geom_hline(yintercept = 0, linetype = "dashed") + 
+  labs(title = "Effect of Foreign Born Population on GDP Social Spending",
+       subtitle = "Controlling for Unemployment",
+       x = "Year",
+       y = "Coefficient")
+ saveRDS(migration_error, file = "app/migrationd.rds")
+ model1 <- lm(soc_exp_pctgdp ~ pct_foreignborn, data = joined_migration) %>%
+  tidy(conf.int = TRUE) 
+model1
+```
+
+
 ```{r}
 pension_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = pension_spending)) + 
   geom_point() +
@@ -335,5 +376,14 @@ migration2_graph <- ggplot(joined_migration, aes(x = pct_foreignborn, y = soc_ex
        x = "Foreign Born Individuals as % of Total Population",
        y = "Social Expenditure as a % of GDP")
 saveRDS(migration2_graph, file = "app/mig_2.rds")
+```
+
+
+```{r, my_choices}
+choices <- primary_data %>%
+  filter(year == 2016) %>%
+  select(country_name) %>%
+  rename("Name" = country_name)
+write_rds(choices, "app/choices_data.rds")
 ```
 

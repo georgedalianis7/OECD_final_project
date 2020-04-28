@@ -16,6 +16,7 @@ library(plotly)
 primary_data <- read_rds("primary_data.rds")
 inequality <- read_rds("inequality_data.rds")
 education <- read_rds("education_data.rds")
+choices1 <- read_rds("choices_data.rds")
 
 ui <- fluidPage(theme = shinytheme("cosmo"),
   titlePanel("Social Spending Programs in the OECD"),
@@ -26,7 +27,10 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                 Development (OECD) is an intergovernmental economic organization
                 consisting of 36 member countries. Its primary goal is to 
                 stimulate international economic progress, facilitate world trade, and collect
-                data regarding economic development."),
+                data regarding economic development. The OECD was established to honor 
+               Secretary of State George Marshall's request for 'some agreement among 
+               the countries of Europe as to the requirements of the situation and the part those 
+               countries themselves will take.'"),
                mainPanel(
                  plotlyOutput("map"),
                  h2("History of the OECD"),
@@ -50,9 +54,25 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                included in these calculations."),
              plotOutput("image"),
              h3("OECD Development Over Time"),
-             p("This graph examines the connection between GDP per capita and life expectancy. T
-               he size of each circle in the graph indicates total population."),
+             p("This graph examines the connection between GDP per capita and life expectancy. The size of each circle in the graph indicates total population."),
              plotOutput("animation"))),
+    tabPanel("Country Comparison",
+             titlePanel(
+               textOutput("graph_title")
+             ),
+             sidebarLayout(
+               sidebarPanel(
+                 selectInput("country", label = "Select Country:",
+                             choices = choices1, selected = "Australia"),
+                htmlOutput("graph_des")
+               ),
+               mainPanel(
+                 tabsetPanel(
+                   tabPanel("Social Spending",
+                            plotlyOutput("fin_plot"))
+                 )
+               )
+             )),
     tabPanel("Economic Factors",
         sidebarLayout(
           sidebarPanel(
@@ -74,9 +94,20 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
             distribution. The coefficient between inequality and social spending
             displays a slight negative relationship, with a coefficient of -.004. This means that a 1% increase in social spending as a percent of GDP is associated with a .004 decline in the Gini coefficient. So increasing social spending programs is associated with less inequality."),
           p(strong("GDP Per Capita:"), "Correlation Coefficient of 830.05. A 1% increase in social spending as a % of GDP is associated with an increase in GDP per capita by about $830."),
+          p(strong("Life Expectancy:"), "Correlation Coefficient of 0.10. A 1% increase in social 
+            spending as a % of GDP is associated with a .1 increase in life expectancy."),
           h2("Labor Market Regulation"),
           plotOutput("labor_market_graph"),
-          p("Analysis of Coefficient and stuffadadsfkjhadsfkjhasdfkjh"))),
+          p(strong("Labor Market Regulation:"), "Correlation Coefficient between 
+              social and spending and labor regulations is 0.05. For every 1% increase
+              in social spending, the labor regulation index score increases by half of
+              one point. The labor regulation index, used by the OECD to observe the ease
+              at which workers can switch jobs and start businesses, increases as the
+              labor market is more restrictive. We can see that increased social spending
+              is associated with a more restrictive labor market, which could hurt 
+              workers looking to switch jobs, and makes it harder to fire workers 
+              who are not performing well.")
+          )),
     tabPanel("Social/Societal Factors",
              sidebarLayout(
                sidebarPanel(
@@ -87,8 +118,10 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                mainPanel(
                  plotOutput("migration_graph")
                )
-                 )
                  ),
+             mainPanel(
+             plotOutput("migration_gra")
+                 )),
     tabPanel("About",
              h2("About the Data"),
              p("All data was sourced from the",
@@ -192,6 +225,38 @@ server <- function(input, output) {
       readRDS(file = "mig_2.rds")
     }
     
+    
+  })
+  
+  output$graph_title <- renderText({
+    paste("Social Spending By Country")
+  })
+  output$graph_des <- renderText({
+  paste("Choose an OECD member nation to see total social spending as a percent of GDP, from 1995 to 2018")
+  })
+  graph_react <- reactive({
+    primary_data %>%
+      filter(country_name == input$country) %>%
+      na.omit()
+  })
+  output$fin_plot <- renderPlotly({
+    
+    data <- graph_react()
+    
+    x <- ggplot(data, aes(x = as.numeric(year), y = pct_soc_spending)) + 
+      geom_line(color = "blue") +
+      geom_point(aes(text = paste0("Year: ", year, "\n",
+                                   "Soc. Spending: ",
+                                   round(pct_soc_spending, 2),
+                                   "% of GDP", sep = "")), color = "blue") +
+      labs(title = paste(data$country_name),
+           x = "Year",
+           y = "Social Spending as % of GDP") +
+      theme_classic()
+    ggplotly(x, tooltop = "text")
+  })
+  output$migration_gra <- renderPlot({
+    readRDS(file = "migrationd.rds")
   })
 }
 # Run the application 
