@@ -218,6 +218,14 @@ saveRDS(inequality_regression, file = "app/ineq_regression.rds")
 ```
 
 ```{r}
+inequality1 <- inequality %>%
+  filter(year == 2015)
+model1 <- lm(gini ~ soc_exp_pctgdp, data = inequality) %>%
+  tidy(conf.int = TRUE) 
+model1
+```
+
+```{r}
 labor_market <- read.csv("OECD-data/EPL_OV_27042020040430416.csv") %>%
   clean_names() %>%
   select(country, country_2, time, value) %>%
@@ -255,27 +263,77 @@ richest_poorest <- primary_data %>%
 ```
 
 ```{r}
-abc1 <- abc %>%
-  filter(year <= 2015) %>%
-  group_by(year) %>%
+abc2 <- abc %>%
+  rename("location" = country,
+         "time" = year) %>%
+  select(time, location, value)
+ad <- right_join(final_socialspending_data, abc2, by = c("location","time")) %>%
+  na.omit()
+  
+```
+
+```{r}
+ad1 <- ad %>%
+  filter(time <= 2015) %>%
+  group_by(time) %>%
   nest()
-abc1 %>%
-  mutate(mod = map(data, ~ lm(gdp_per_capita ~ value, data = .)),
+x <- ad1 %>%
+  mutate(mod = map(data, ~ lm(value ~ pension_spending, data = .)),
          reg_results = map(mod, ~ tidy(.)),
-         coef = map_dbl(reg_results, ~ filter(., term == "value") 
+         coef = map_dbl(reg_results, ~ filter(., term == "pension_spending") 
                         %>% pull(estimate)),
-         se = map_dbl(reg_results, ~ filter(., term == "value")
+         se = map_dbl(reg_results, ~ filter(., term == "pension_spending")
                       %>% pull(std.error)),
          upper = coef + 1.96 * se,
-         lower = coef - 1.96 * se) %>%
- ggplot(aes(x = year, y = coef)) +
+         lower = coef - 1.96 * se)
+ ggplot(x, aes(x = time, y = coef)) +
   geom_point(color = "blue") +
   geom_errorbar(aes(x = year, ymin = lower, ymax = upper), color = "blue") +
   theme_classic() +
   geom_hline(yintercept = 0, linetype = "dashed") + 
-  labs(title = "Effect of Lower Labor Market Regulation on GDP Per Capita",
+  labs(title = "Effect of Labor Market Regulation on GDP Per Capita",
        subtitle = "Controlling for Social Spending",
        x = "Year",
        y = "Coefficient")
+```
+
+```{r, migration_data}
+migration <- read.csv("OECD-data/DP_LIVE_28042020023147434.csv") %>%
+  clean_names() %>%
+  select(location, time, value) %>%
+  rename("pct_foreignborn" = value)
+joined_migration <- inner_join(migration, final_socialspending_data, by = c("location", "time"))
+migration_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = unemp_expenditure)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic() +
+  labs(title = "Public Unemployment Spending",
+       subtitle = "Includes Redundancy Payments from Public Funds",
+       x = "Social Expenditure as a % of GDP",
+       y = "Unemployment Expenditure as % of GDP")
+saveRDS(migration_graph, file = "app/mig_graph.rds")
+```
+```{r}
+pension_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = pension_spending)) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic() +
+  labs(title = "Pension Spending",
+       subtitle = "Includes Lump Sum Payments",
+       x = "Social Expenditure as a % of GDP",
+       y = "Pension Spending as % of GDP")
+saveRDS(pension_graph, file = "app/pen_graph.rds")
+```
+
+```{r, migration2_graph}
+migration2_graph <- ggplot(joined_migration, aes(x = pct_foreignborn, y = soc_exp_pctgdp)) + 
+  geom_jitter(width = 0.1) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic() +
+  labs(title = "Foreign-born Citizens",
+       subtitle = "Includes Individuals Born Abroad who Currently Reside in OECD Country",
+       x = "Foreign Born Individuals as % of Total Population",
+       y = "Social Expenditure as a % of GDP")
+saveRDS(migration2_graph, file = "app/mig_2.rds")
 ```
 
