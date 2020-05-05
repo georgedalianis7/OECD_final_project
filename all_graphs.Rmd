@@ -5,7 +5,10 @@ date: "5/5/20"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
+
+# Loaded necessary libraries to load, tidy, and graph data.
+
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(janitor)
@@ -15,40 +18,7 @@ library(readr)
 library(broom)
 ```
 
-```{r, load_data}
-social_spending <- read.csv("OECD-data/DP_LIVE_19032020165309966.csv") %>%
-  clean_names() %>%
-  select(location, time, value) %>%
-  filter(! location %in% c("EA", "EU"))
-```
-
-```{r, graph_data}
-data_social <- as.data.frame(social_spending)
-x <- data_social %>%
-  group_by(location) %>%
-  summarize(avg_spending = mean(value))
-soc_spending_plot <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
-  geom_col() + 
-  labs(title = "Average Social Benefits to Households in OECD Countries from 1995 to 2018",
-       subtitle = "In-cash Benefits, Measured as % of GDP", 
-       x = "Country", 
-       y = "Average benefits (% of GDP)",
-       caption = "Source: OECD National Accounts Statistics") +
-  scale_y_continuous(labels = percent_format(scale = 1)) + 
-  theme_classic() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
-  theme(legend.position = "none") + 
-  scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
-saveRDS(soc_spending_plot, file = "app/soc_spending_plot.rds")
-```
-
-```{r}
-oecd_social_benefits.png <- y
-ggsave(filename = "oecd_social_benefits.png", device = "png", plot = last_plot())
-```
-
-
-```{r, load_animate}
+```{r, load_world_bank_data}
 gdp_per_cap <- read_csv("World_Bank_data/d697f85d-ea2c-4d71-933e-494201e0e9ac_Data.csv") %>%
   clean_names() %>%
   head(-5)
@@ -62,7 +32,7 @@ pop0 <- pop[-c(5:9)]
 ```
 
 
-```{r, tidy_data}
+```{r, tidying_world_bank_data}
 gdp_per_cap1 <- gdp_per_cap0 %>%
   pivot_longer(x1995_yr1995:x2018_yr2018, names_to = "year",
                values_to = "gdp_per_capita",
@@ -85,7 +55,40 @@ graph <- inner_join(gdp_per_cap1, pop1, by = c("country_name", "country_code", "
 graph1 <- inner_join(graph, social_spending1, by = c("country_code", "year"))
 ```
 
-```{r}
+
+```{r, load_OECD_data}
+social_spending <- read.csv("OECD-data/DP_LIVE_19032020165309966.csv") %>%
+  clean_names() %>%
+  select(location, time, value) %>%
+  filter(! location %in% c("EA", "EU"))
+
+gini <- read.csv("OECD-data/DP_LIVE_24042020230247538.csv") %>%
+  clean_names() %>% 
+  rename("year" = time,
+         "gini" = value) %>%
+  select(location, year, gini)
+write_rds(gini, "app/inequality_data.rds")
+
+social_exp <- read.csv("OECD-data/DP_LIVE_26042020204617582.csv") %>%
+  clean_names() %>%
+  filter(time <= 2015) %>%
+  select(location, time, value) %>%
+  rename("soc_exp_pctgdp" = value)
+
+unemployment_benefits <- read.csv("OECD-data/DP_LIVE_26042020204828426.csv") %>%
+  clean_names() %>%
+  select(location, time, value) %>%
+  rename("unemp_expenditure" = value)
+
+pension_spending <- read.csv("OECD-data/DP_LIVE_26042020204940396.csv") %>%
+  clean_names() %>%
+  filter(time <= 2015) %>%
+  select(location, time, value) %>%
+  rename("pension_spending" = value)
+joined_socialp1 <- inner_join(social_exp, unemployment_benefits, by = c("location", "time"))
+final_joined_social <- inner_join(joined_socialp1, pension_spending, by = c("location", "time"))
+write_rds(final_joined_social, "app/final_socialspending_data.rds")
+
 life_expectancy <- read.csv("OECD-data/DP_LIVE_24042020220916159.csv") %>%
   clean_names() %>%
   rename("country_code" = location,
@@ -95,37 +98,43 @@ life_expectancy <- read.csv("OECD-data/DP_LIVE_24042020220916159.csv") %>%
 life_expectancy$year <- as.character(life_expectancy$year)
 primary_data <- inner_join(graph1, life_expectancy, by = c("country_code", "year"))
 write_rds(primary_data, "app/primary_data.rds")
-```
 
-
-```{r, inequality_data}
-gini <- read.csv("OECD-data/DP_LIVE_24042020230247538.csv") %>%
-  clean_names() %>% 
-  rename("year" = time,
-         "gini" = value) %>%
-  select(location, year, gini)
-write_rds(gini, "app/inequality_data.rds")
-```
-
-```{r, education_data}
-adult_edu_level <- read.csv("OECD-data/DP_LIVE_25022020171955325.csv") %>%
+labor_market <- read.csv("OECD-data/EPL_OV_27042020040430416.csv") %>%
   clean_names() %>%
-  filter(subject == "UPPSRY", ! location %in% c("COL", "ZAF", "CRI")) %>%
-  rename("year" = time,
-         "pct_secondary" = value)
+  select(country, country_2, time, value) %>%
+  rename("country_name" = country_2,
+         "year" = time)
 
-pct_tertiary_edu <- read.csv("OECD-data/DP_LIVE_25022020171724289.csv") %>%
+migration <- read.csv("OECD-data/DP_LIVE_28042020023147434.csv") %>%
   clean_names() %>%
-  rename("year" = time,
-         "pct_tert" = value) %>%
-  filter(subject == "25_34", ! location %in% c("COL", "ZAF", "CRI"))
-
-education <- inner_join(adult_edu_level, pct_tertiary_edu, by = c("location", "year")) %>%
-  select(location, year, pct_secondary, pct_tert)
-write_rds(education, "app/education_data.rds")
+  select(location, time, value) %>%
+  rename("pct_foreignborn" = value)
 ```
 
-```{r, interactive_data}
+
+
+```{r, avg_soc_spending_graph}
+data_social <- as.data.frame(social_spending)
+x <- data_social %>%
+  group_by(location) %>%
+  summarize(avg_spending = mean(value))
+soc_spending_plot <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
+  geom_col() + 
+  labs(title = "Average Social Benefits to Households in OECD Countries from 1995 to 2018",
+       subtitle = "In-cash Benefits, Measured as % of GDP", 
+       x = "Country", 
+       y = "Average benefits (% of GDP)",
+       caption = "Source: OECD National Accounts Statistics") +
+  scale_y_continuous(labels = percent_format(scale = 1)) + 
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
+  theme(legend.position = "none") + 
+  scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
+saveRDS(soc_spending_plot, file = "app/soc_spending_plot.rds")
+```
+
+
+```{r, interactive_development_graph}
 options(scipen = 10000)
 primary_data$year <- as.integer(primary_data$year)
 life_exp_anim <- primary_data %>%
@@ -143,30 +152,9 @@ life_exp_anim <- primary_data %>%
 anim_save(filename = "life_exp_animation", animation = life_exp_anim, path = "app")
 ```
 
-```{r}
-social_exp <- read.csv("OECD-data/DP_LIVE_26042020204617582.csv") %>%
-  clean_names() %>%
-  filter(time <= 2015) %>%
-  select(location, time, value) %>%
-  rename("soc_exp_pctgdp" = value)
-unemployment_benefits <- read.csv("OECD-data/DP_LIVE_26042020204828426.csv") %>%
-  clean_names() %>%
-  select(location, time, value) %>%
-  rename("unemp_expenditure" = value)
-pension_spending <- read.csv("OECD-data/DP_LIVE_26042020204940396.csv") %>%
-  clean_names() %>%
-  filter(time <= 2015) %>%
-  select(location, time, value) %>%
-  rename("pension_spending" = value)
-joined_socialp1 <- inner_join(social_exp, unemployment_benefits, by = c("location", "time"))
-final_joined_social <- inner_join(joined_socialp1, pension_spending, by = c("location", "time"))
-```
 
-```{r}
-write_rds(final_joined_social, "app/final_socialspending_data.rds")
-```
 
-```{r, soc_regreggion}
+```{r, soc_spending_regression}
 soc_regression <- primary_data %>%
 ggplot(aes(x = pct_soc_spending, y = gdp_per_capita)) + 
   geom_point() + 
@@ -183,7 +171,7 @@ model <- lm(gdp_per_capita ~ pct_soc_spending, data = primary_data) %>%
 model
 ```
 
-```{r, life_regression}
+```{r, life_exp_regression}
 life_regression <- primary_data %>%
   ggplot(aes(x = pct_soc_spending, y = life_exp)) + 
   geom_point() + 
@@ -215,9 +203,6 @@ inequality_regression <- ggplot(inequality, aes(x = soc_exp_pctgdp, y = gini)) +
        x = "Social Spending as a % of GDP",
        y = "Gini Coefficient")
 saveRDS(inequality_regression, file = "app/ineq_regression.rds")
-```
-
-```{r}
 inequality1 <- inequality %>%
   filter(year == 2015)
 model1 <- lm(gini ~ soc_exp_pctgdp, data = inequality) %>%
@@ -225,12 +210,8 @@ model1 <- lm(gini ~ soc_exp_pctgdp, data = inequality) %>%
 model1
 ```
 
-```{r}
-labor_market <- read.csv("OECD-data/EPL_OV_27042020040430416.csv") %>%
-  clean_names() %>%
-  select(country, country_2, time, value) %>%
-  rename("country_name" = country_2,
-         "year" = time)
+
+```{r, labor_market_regression}
 primary_data$year <- as.integer(primary_data$year)
 abc <- inner_join(labor_market, primary_data, by = c("country_name", "year"))
 market_regression <- ggplot(abc, aes(x = pct_soc_spending, y = value)) + 
@@ -240,15 +221,14 @@ market_regression <- ggplot(abc, aes(x = pct_soc_spending, y = value)) +
          x = "Level of Social Spending as % of GDP",
          y = "Degree of Labor Market Regulation")
   saveRDS(market_regression, file = "app/mark_regression.rds")
-```
-
-```{r}
-model1 <- lm(value ~ pct_soc_spending, data = abc) %>%
+  model1 <- lm(value ~ pct_soc_spending, data = abc) %>%
   tidy(conf.int = TRUE) 
 model1
 ```
 
-```{r, facet_graph}
+
+
+```{r, faceted_country_graph}
 primary_data$year <- as.numeric(primary_data$year)
 richest_poorest <- primary_data %>%
   group_by(year) %>%
@@ -268,17 +248,14 @@ richest_poorest <- primary_data %>%
        color = "Country")
 ```
 
-```{r}
+
+```{r, coefficient_labor_market_graph}
 abc2 <- abc %>%
   rename("location" = country,
          "time" = year) %>%
   select(time, location, value)
 ad <- right_join(final_socialspending_data, abc2, by = c("location","time")) %>%
   na.omit()
-  
-```
-
-```{r}
 ad1 <- ad %>%
   filter(time <= 2015) %>%
   group_by(time) %>%
@@ -303,11 +280,7 @@ x <- ad1 %>%
        y = "Coefficient")
 ```
 
-```{r, migration_data}
-migration <- read.csv("OECD-data/DP_LIVE_28042020023147434.csv") %>%
-  clean_names() %>%
-  select(location, time, value) %>%
-  rename("pct_foreignborn" = value)
+```{r, unemp_regression}
 joined_migration <- inner_join(migration, final_socialspending_data, by = c("location", "time"))
 migration_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = unemp_expenditure)) + 
   geom_point() +
@@ -324,12 +297,12 @@ model1
 ```
 
 
-```{r}
-lol <- joined_migration %>%
+```{r, migration_regression}
+mig <- joined_migration %>%
   filter(time <= 2015) %>%
   group_by(time) %>%
   nest()
-w <- lol %>%
+wmig <- mig %>%
   mutate(mod = map(data, ~ lm(soc_exp_pctgdp ~ pct_foreignborn, data = .)),
          reg_results = map(mod, ~ tidy(.)),
          coef = map_dbl(reg_results, ~ filter(., term == "pct_foreignborn") 
@@ -354,7 +327,7 @@ model1
 ```
 
 
-```{r}
+```{r, pension_graph}
 pension_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = pension_spending)) + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
@@ -379,7 +352,7 @@ saveRDS(migration2_graph, file = "app/mig_2.rds")
 ```
 
 
-```{r, my_choices}
+```{r, my_choices_for_shiny}
 choices <- primary_data %>%
   filter(year == 2016) %>%
   select(country_name) %>%
