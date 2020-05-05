@@ -1,2 +1,2 @@
-# finalprojectversion1
-### testing formatting
+# Social Spending in OECD Member Countries
+#### This project examines how levels of social spending in the Organization for Economic Co-operation and Development (OECD) affects GDP per capita, labor markets, migration, and other socioeconomic variables. I used data from the OECD and World Bank. I pursued this project hoping to understand how governments make decisions to allocate money to social programs. My final project link is here: https://georgedalianis7.shinyapps.io/oecd_social_spending/. 
