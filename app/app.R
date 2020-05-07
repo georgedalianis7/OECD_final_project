@@ -310,7 +310,7 @@ server <- function(input, output) {
   output$graph_des <- renderText({
   paste("Choose an OECD member nation to see total social spending as a percent 
   of GDP,
-        from 1995 to 2018")
+        from 1995 to 2018.")
   })
   graph_react <- reactive({
     primary_data %>%
@@ -342,4 +342,5 @@ server <- function(input, output) {
   })
 }
 # Run the application 
+
 shinyApp(ui = ui, server = server)

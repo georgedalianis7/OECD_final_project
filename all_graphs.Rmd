@@ -1,7 +1,7 @@
 ---
 title: "Code for Graphs"
 author: "George Dalianis"
-date: "5/5/20"
+date: "5/7/20"
 output: html_document
 ---
 
@@ -18,7 +18,12 @@ library(readr)
 library(broom)
 ```
 
+
 ```{r, load_world_bank_data}
+
+# Loading World Bank data on GDP per capita and total population within OECD
+# countries.
+
 gdp_per_cap <- read_csv("World_Bank_data/d697f85d-ea2c-4d71-933e-494201e0e9ac_Data.csv") %>%
   clean_names() %>%
   head(-5)
@@ -33,6 +38,10 @@ pop0 <- pop[-c(5:9)]
 
 
 ```{r, tidying_world_bank_data}
+
+# Tidying the World Bank data and merging the data on GDP per capita and
+# population into one tibble.
+
 gdp_per_cap1 <- gdp_per_cap0 %>%
   pivot_longer(x1995_yr1995:x2018_yr2018, names_to = "year",
                values_to = "gdp_per_capita",
@@ -57,6 +66,9 @@ graph1 <- inner_join(graph, social_spending1, by = c("country_code", "year"))
 
 
 ```{r, load_OECD_data}
+
+# Loading all OECD data.
+
 social_spending <- read.csv("OECD-data/DP_LIVE_19032020165309966.csv") %>%
   clean_names() %>%
   select(location, time, value) %>%
@@ -85,8 +97,10 @@ pension_spending <- read.csv("OECD-data/DP_LIVE_26042020204940396.csv") %>%
   filter(time <= 2015) %>%
   select(location, time, value) %>%
   rename("pension_spending" = value)
-joined_socialp1 <- inner_join(social_exp, unemployment_benefits, by = c("location", "time"))
-final_joined_social <- inner_join(joined_socialp1, pension_spending, by = c("location", "time"))
+joined_socialp1 <- inner_join(social_exp, unemployment_benefits, 
+                              by = c("location", "time"))
+final_joined_social <- inner_join(joined_socialp1, pension_spending, 
+                                  by = c("location", "time"))
 write_rds(final_joined_social, "app/final_socialspending_data.rds")
 
 life_expectancy <- read.csv("OECD-data/DP_LIVE_24042020220916159.csv") %>%
@@ -96,7 +110,8 @@ life_expectancy <- read.csv("OECD-data/DP_LIVE_24042020220916159.csv") %>%
          "life_exp" = value) %>%
   select(country_code, year, life_exp)
 life_expectancy$year <- as.character(life_expectancy$year)
-primary_data <- inner_join(graph1, life_expectancy, by = c("country_code", "year"))
+primary_data <- inner_join(graph1, life_expectancy, 
+                           by = c("country_code", "year"))
 write_rds(primary_data, "app/primary_data.rds")
 
 labor_market <- read.csv("OECD-data/EPL_OV_27042020040430416.csv") %>%
@@ -112,13 +127,18 @@ migration <- read.csv("OECD-data/DP_LIVE_28042020023147434.csv") %>%
 ```
 
 
-
 ```{r, avg_soc_spending_graph}
+
+# Used data on social spending to create a graph showing the average levels of
+# social spending over time in OECD countries. I saved it as an image using
+# saveRDS(), as this was the easiest way to get it into the shiny app.
+
 data_social <- as.data.frame(social_spending)
 x <- data_social %>%
   group_by(location) %>%
   summarize(avg_spending = mean(value))
-soc_spending_plot <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_spending, fill = avg_spending)) + 
+soc_spending_plot <- ggplot(x, aes(x = reorder(location, avg_spending),
+                                   y = avg_spending, fill = avg_spending)) + 
   geom_col() + 
   labs(title = "Average Social Benefits to Households in OECD Countries from 1995 to 2018",
        subtitle = "In-cash Benefits, Measured as % of GDP", 
@@ -127,18 +147,38 @@ soc_spending_plot <- ggplot(x, aes(x = reorder(location, avg_spending), y = avg_
        caption = "Source: OECD National Accounts Statistics") +
   scale_y_continuous(labels = percent_format(scale = 1)) + 
   theme_classic() + 
-  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 9)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, 
+                                   size = 9)) + 
   theme(legend.position = "none") + 
-  scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile", "ISR" = "Israel", "ISL" = "Iceland", "AUS" = "Australia", "TUR" = "Turkey", "CAN" = "Canada", "IRL" = "Ireland", "CHE" = "Switzerland", "EST" = "Estonia", "NZL" = "New Zealand", "LVA" = "Latvia", "LTU" = "Lithuania", "NLD" = "Netherlands", "CZE" = "Czech Republic", "JPN" = "Japan", "GBR" = "United Kingdom", "SVK" = "Slovak Republic", "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway", "PRT" = "Portugal", "SWE" = "Sweden", "LUX" = "Luxembourg", "GRC" = "Greece", "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland", "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
+  scale_x_discrete(labels = c("MEX" = "Mexico", "KOR" = "Korea", "CHL" = "Chile",
+                              "ISR" = "Israel", "ISL" = "Iceland", 
+                              "AUS" = "Australia", "TUR" = "Turkey", 
+                              "CAN" = "Canada", "IRL" = "Ireland", 
+                              "CHE" = "Switzerland", "EST" = "Estonia", 
+                              "NZL" = "New Zealand", "LVA" = "Latvia", 
+                              "LTU" = "Lithuania", "NLD" = "Netherlands", 
+                              "CZE" = "Czech Republic", "JPN" = "Japan", 
+                              "GBR" = "United Kingdom", "SVK" = "Slovak Republic",
+                              "ESP" = "Spain", "HUN" = "Hungary", "NOR" = "Norway",
+                              "PRT" = "Portugal", "SWE" = "Sweden", 
+                              "LUX" = "Luxembourg", "GRC" = "Greece", 
+                              "POL" = "Poland", "BEL" = "Belgium", "SVN" = "Slovenia", 
+                              "DNK" = "Denmark", "DEU" = "Germany", "FIN" = "Finland",
+                              "ITA" = "Italy", "FRA" = "France", "AUT" = "Austria"))
 saveRDS(soc_spending_plot, file = "app/soc_spending_plot.rds")
 ```
 
 
-```{r, interactive_development_graph}
+```{r, animation_development_graph}
+
+# I made an animated graph showing economic development of OECD countries over
+# time. I used options(scipen = 10000) to get rid of decimals.
+
 options(scipen = 10000)
 primary_data$year <- as.integer(primary_data$year)
 life_exp_anim <- primary_data %>%
-  ggplot(aes(x = gdp_per_capita, y = life_exp, size = population, color = country_name)) + 
+  ggplot(aes(x = gdp_per_capita, y = life_exp, size = population, 
+             color = country_name)) + 
   geom_point(show.legend = FALSE, alpha = 0.7) + 
   scale_color_viridis_d() + scale_x_log10() +
   theme_classic() +
@@ -153,8 +193,11 @@ anim_save(filename = "life_exp_animation", animation = life_exp_anim, path = "ap
 ```
 
 
-
 ```{r, soc_spending_regression}
+
+# Made a graph showing how social spending affects GDP per capita over time, and
+# ran a linear regression to see how strong the correlation was.
+
 soc_regression <- primary_data %>%
 ggplot(aes(x = pct_soc_spending, y = gdp_per_capita)) + 
   geom_point() + 
@@ -171,7 +214,12 @@ model <- lm(gdp_per_capita ~ pct_soc_spending, data = primary_data) %>%
 model
 ```
 
+
 ```{r, life_exp_regression}
+
+# Made a graph and regression showing how social spending affects life
+# expectancy over time.
+
 life_regression <- primary_data %>%
   ggplot(aes(x = pct_soc_spending, y = life_exp)) + 
   geom_point() + 
@@ -188,7 +236,12 @@ model1 <- lm(life_exp ~ pct_soc_spending, data = primary_data) %>%
 model1
 ```
 
+
 ```{r, inequality_regression}
+
+# This graph shows how social spending affects economic inequality over time, as
+# measured by the Gini coefficient.
+
 x <- inequality_data %>%
   filter(year == 2015)
 y <- final_socialspending_data %>%
@@ -212,10 +265,16 @@ model1
 
 
 ```{r, labor_market_regression}
+
+# This graph shows how social spending affects labor market regulations, and
+# models a linear regression.
+
 primary_data$year <- as.integer(primary_data$year)
 abc <- inner_join(labor_market, primary_data, by = c("country_name", "year"))
 market_regression <- ggplot(abc, aes(x = pct_soc_spending, y = value)) + 
-    geom_jitter(height = 0.05) + geom_smooth(method = "lm", se = FALSE) + theme_classic() +
+    geom_jitter(height = 0.05) + 
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic() +
     labs(title = "Effect of Social Spending Programs on Labor Market Freedom",
          subtitle = "Labor Market Regulation Measured on 1-5 Scale: Higher Number Means Comparatively Lower Freedom",
          x = "Level of Social Spending as % of GDP",
@@ -227,62 +286,15 @@ model1
 ```
 
 
-
-```{r, faceted_country_graph}
-primary_data$year <- as.numeric(primary_data$year)
-richest_poorest <- primary_data %>%
-  group_by(year) %>%
-  filter(year <= 2017) %>%
-  filter(country_name %in% c("Luxembourg", "Greece")) %>%
-  ggplot(aes(x = year, y = gdp_per_capita, color = country_name)) + 
-  geom_line() + 
-  geom_vline(xintercept = 2008, linetype = "dashed") + 
-  scale_color_manual(labels = c("Greece", "Luxembourg"),
-                     values = c("blue", "red")) +
-  geom_text(aes(x = 2007.5, label = "2008 Recession", y = 60000), angle = 90, color = "black") +
-  theme_classic() + 
-  labs(title = "Richest and Poorest OECD Countries in 2016",
-       subtitle = "Measured by GDP Per Capita, US$",
-       x = "Year",
-       y = "GDP Per Capita, US$",
-       color = "Country")
-```
-
-
-```{r, coefficient_labor_market_graph}
-abc2 <- abc %>%
-  rename("location" = country,
-         "time" = year) %>%
-  select(time, location, value)
-ad <- right_join(final_socialspending_data, abc2, by = c("location","time")) %>%
-  na.omit()
-ad1 <- ad %>%
-  filter(time <= 2015) %>%
-  group_by(time) %>%
-  nest()
-x <- ad1 %>%
-  mutate(mod = map(data, ~ lm(pension_spending ~ value, data = .)),
-         reg_results = map(mod, ~ tidy(.)),
-         coef = map_dbl(reg_results, ~ filter(., term == "value") 
-                        %>% pull(estimate)),
-         se = map_dbl(reg_results, ~ filter(., term == "value")
-                      %>% pull(std.error)),
-         upper = coef + 1.96 * se,
-         lower = coef - 1.96 * se)
- ggplot(x, aes(x = time, y = coef)) +
-  geom_point(color = "blue") +
-  geom_errorbar(aes(x = time, ymin = lower, ymax = upper), color = "blue") +
-  theme_classic() +
-  geom_hline(yintercept = 0, linetype = "dashed") + 
-  labs(title = "Effect of Labor Market Regulation on GDP Per Capita",
-       subtitle = "Controlling for Social Spending",
-       x = "Year",
-       y = "Coefficient")
-```
-
 ```{r, unemp_regression}
-joined_migration <- inner_join(migration, final_socialspending_data, by = c("location", "time"))
-migration_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = unemp_expenditure)) + 
+
+# This graph displays how social spending affects unemployment spending, and a
+# regression models the coefficient between the two.
+
+joined_migration <- inner_join(migration, final_socialspending_data, 
+                               by = c("location", "time"))
+migration_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, 
+                                                y = unemp_expenditure)) + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   theme_classic() +
@@ -298,6 +310,10 @@ model1
 
 
 ```{r, migration_regression}
+
+# This graph displays the coefficient of the effect of foreign born population
+# on the level of social spending in OECD countries.
+
 mig <- joined_migration %>%
   filter(time <= 2015) %>%
   group_by(time) %>%
@@ -328,7 +344,11 @@ model1
 
 
 ```{r, pension_graph}
-pension_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = pension_spending)) + 
+
+# This graph shows the connection between social spending and pension spending.
+
+pension_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp,
+                                              y = pension_spending)) + 
   geom_point() +
   geom_smooth(method = "lm", se = FALSE) +
   theme_classic() +
@@ -339,8 +359,14 @@ pension_graph <- ggplot(joined_migration, aes(x = soc_exp_pctgdp, y = pension_sp
 saveRDS(pension_graph, file = "app/pen_graph.rds")
 ```
 
+
 ```{r, migration2_graph}
-migration2_graph <- ggplot(joined_migration, aes(x = pct_foreignborn, y = soc_exp_pctgdp)) + 
+
+# This graph displays how social spending affects the percent of foreign born
+# citizens in a specific country.
+
+migration2_graph <- ggplot(joined_migration, aes(x = pct_foreignborn, 
+                                                 y = soc_exp_pctgdp)) + 
   geom_jitter(width = 0.1) +
   geom_smooth(method = "lm", se = FALSE) +
   theme_classic() +
@@ -353,10 +379,13 @@ saveRDS(migration2_graph, file = "app/mig_2.rds")
 
 
 ```{r, my_choices_for_shiny}
+
+# Needed to make the country names into a column called "choices", in order to
+# use this for making an interactive Plotly graph in the shiny app.
+
 choices <- primary_data %>%
   filter(year == 2016) %>%
   select(country_name) %>%
   rename("Name" = country_name)
 write_rds(choices, "app/choices_data.rds")
 ```
-
